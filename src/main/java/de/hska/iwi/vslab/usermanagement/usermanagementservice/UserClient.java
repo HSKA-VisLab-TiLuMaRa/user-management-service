@@ -29,15 +29,15 @@ public class UserClient {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@HystrixCommand(fallbackMethod = "getRolesCache", commandProperties = {
+	/*
+	* USER CRUD CORE SERVICE
+	*/
+
+	@HystrixCommand(fallbackMethod = "createUserFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
-	public Iterable<Role> getRoles() {
-		Collection<Role> roles = new HashSet<Role>();
-		Role[] tmproles = restTemplate.getForObject("http://user-service/roles", Role[].class);
-		Collections.addAll(roles, tmproles);
-		roleCache.clear();
-		roles.forEach(r -> roleCache.put(r.getId(), r));
-		return roles;
+	public User createUser(User payload) {
+		User tmpuser = restTemplate.postForObject("http://user-service/users", payload, User.class);
+		return tmpuser;
 	}
 
 	@HystrixCommand(fallbackMethod = "getUsersCache", commandProperties = {
@@ -59,8 +59,70 @@ public class UserClient {
 		return tmpuser;
 	}
 
-	public Iterable<Role> getRolesCache() {
-		return roleCache.values();
+	@HystrixCommand(fallbackMethod = "updateUserFallback", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public User updateUser(Long userId, User payload) {
+		restTemplate.put("http://user-service/users/" + userId, payload);
+		return new User();
+	}
+
+	@HystrixCommand(fallbackMethod = "deleteUserFallback", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public User deleteUser(Long userId) {
+		restTemplate.delete("http://user-service/users/" + userId);
+		return new User();
+	}
+
+	/*
+	* ROLE CRUD CORE SERVICE
+	*/
+
+	@HystrixCommand(fallbackMethod = "createRoleFallback", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public Role createRole(Role payload) {
+		Role tmprole = restTemplate.postForObject("http://user-service/roles", payload, Role.class);
+		return tmprole;
+	}
+
+	@HystrixCommand(fallbackMethod = "getRolesCache", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public Iterable<Role> getRoles() {
+		Collection<Role> roles = new HashSet<Role>();
+		Role[] tmproles = restTemplate.getForObject("http://user-service/roles", Role[].class);
+		Collections.addAll(roles, tmproles);
+		roleCache.clear();
+		roles.forEach(r -> roleCache.put(r.getId(), r));
+		return roles;
+	}
+
+	@HystrixCommand(fallbackMethod = "getRoleCache", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public Role getRole(Long roleId) {
+		Role tmprole = restTemplate.getForObject("http://user-service/roles/" + roleId, Role.class);
+		roleCache.putIfAbsent(roleId, tmprole);
+		return tmprole;
+	}
+
+	@HystrixCommand(fallbackMethod = "updateRoleFallback", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public Role updateRole(Long roleId, Role payload) {
+		restTemplate.put("http://user-service/roles/" + roleId, payload);
+		return new Role();
+	}
+
+	@HystrixCommand(fallbackMethod = "deleteRoleFallback", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public Role deleteRole(Long roleId) {
+		restTemplate.delete("http://user-service/roles/" + roleId);
+		return new Role();
+	}
+
+	/*
+	* USER CRUD FALLBACK
+	*/
+
+	public User createUserFallback(User payload){
+		return payload;
 	}
 
 	public Iterable<User> getUsersCache() {
@@ -70,6 +132,41 @@ public class UserClient {
 	public User getUserCache(Long userId) {
 		return userCache.getOrDefault(userId, new User());
 	}
+
+	public User updateUserFallback(Long userId, User payload){
+		return payload;
+	}
+
+	public User deleteUserFallback(Long userId){
+		return new User();
+	}
+	/*
+	* ROLE CRUD FALLBACK
+	*/
+
+	public Role createRoleFallback(Role payload){
+		return payload;
+	}
+
+	public Iterable<Role> getRolesCache() {
+		return roleCache.values();
+	}
+
+	public Role getRoleCache(Long getRoleId) {
+		return roleCache.getOrDefault(getRoleId, new Role());
+	}
+
+	public Role updateRoleFallback(Long getRoleId, Role payload){
+		return payload;
+	}
+
+	public Role deleteRoleFallback(Long getRoleId){
+		return new Role();
+	}
+
+	/*
+	* BEANS
+	*/
 
 	@LoadBalanced
   @Bean
