@@ -24,9 +24,21 @@ import org.springframework.context.annotation.Bean;
 public class UserClient {
 
 	private final Map<Long, User> userCache = new LinkedHashMap<Long, User>();
+	private final Map<Long, Role> roleCache = new LinkedHashMap<Long, Role>();
 
 	@Autowired
 	private RestTemplate restTemplate;
+
+	@HystrixCommand(fallbackMethod = "getRolesCache", commandProperties = {
+	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
+	public Iterable<Role> getRoles() {
+		Collection<Role> roles = new HashSet<Role>();
+		Role[] tmproles = restTemplate.getForObject("http://user-service/roles", Role[].class);
+		Collections.addAll(roles, tmproles);
+		roleCache.clear();
+		roles.forEach(r -> roleCache.put(r.getId(), r));
+		return roles;
+	}
 
 	@HystrixCommand(fallbackMethod = "getUsersCache", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
@@ -45,6 +57,10 @@ public class UserClient {
 		User tmpuser = restTemplate.getForObject("http://user-service/users/" + userId, User.class);
 		userCache.putIfAbsent(userId, tmpuser);
 		return tmpuser;
+	}
+
+	public Iterable<Role> getRolesCache() {
+		return roleCache.values();
 	}
 
 	public Iterable<User> getUsersCache() {
