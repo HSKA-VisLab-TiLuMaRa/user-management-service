@@ -27,7 +27,17 @@ public class UserClient {
 	private final Map<Long, Role> roleCache = new LinkedHashMap<Long, Role>();
 
 	@Autowired
-	private RestTemplate restTemplate;
+	private RestTemplate userRestTemplate;
+
+	/*
+	* BEANS
+	*/
+	@LoadBalanced
+  	@Bean
+  	public RestTemplate userRestTemplate(RestTemplateBuilder builder) {
+    // Do any additional configuration here
+     return builder.build();
+  }
 
 	/*
 	* USER CRUD CORE SERVICE
@@ -36,7 +46,7 @@ public class UserClient {
 	@HystrixCommand(fallbackMethod = "createUserFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public User createUser(User payload) {
-		User tmpuser = restTemplate.postForObject("http://user-service/users", payload, User.class);
+		User tmpuser = userRestTemplate.postForObject("http://user-service/users", payload, User.class);
 		return tmpuser;
 	}
 
@@ -44,7 +54,7 @@ public class UserClient {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public Iterable<User> getUsers() {
 		Collection<User> users = new HashSet<User>();
-		User[] tmpusers = restTemplate.getForObject("http://user-service/users", User[].class);
+		User[] tmpusers = userRestTemplate.getForObject("http://user-service/users", User[].class);
 		Collections.addAll(users, tmpusers);
 		userCache.clear();
 		users.forEach(u -> userCache.put(u.getId(), u));
@@ -54,7 +64,7 @@ public class UserClient {
 	@HystrixCommand(fallbackMethod = "getUserCache", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public User getUser(Long userId) {
-		User tmpuser = restTemplate.getForObject("http://user-service/users/" + userId, User.class);
+		User tmpuser = userRestTemplate.getForObject("http://user-service/users/" + userId, User.class);
 		userCache.putIfAbsent(userId, tmpuser);
 		return tmpuser;
 	}
@@ -62,14 +72,14 @@ public class UserClient {
 	@HystrixCommand(fallbackMethod = "updateUserFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public User updateUser(Long userId, User payload) {
-		restTemplate.put("http://user-service/users/" + userId, payload);
+		userRestTemplate.put("http://user-service/users/" + userId, payload);
 		return new User();
 	}
 
 	@HystrixCommand(fallbackMethod = "deleteUserFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public User deleteUser(Long userId) {
-		restTemplate.delete("http://user-service/users/" + userId);
+		userRestTemplate.delete("http://user-service/users/" + userId);
 		return new User();
 	}
 
@@ -80,7 +90,7 @@ public class UserClient {
 	@HystrixCommand(fallbackMethod = "createRoleFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public Role createRole(Role payload) {
-		Role tmprole = restTemplate.postForObject("http://user-service/roles", payload, Role.class);
+		Role tmprole = userRestTemplate.postForObject("http://user-service/roles", payload, Role.class);
 		return tmprole;
 	}
 
@@ -88,7 +98,7 @@ public class UserClient {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public Iterable<Role> getRoles() {
 		Collection<Role> roles = new HashSet<Role>();
-		Role[] tmproles = restTemplate.getForObject("http://user-service/roles", Role[].class);
+		Role[] tmproles = userRestTemplate.getForObject("http://user-service/roles", Role[].class);
 		Collections.addAll(roles, tmproles);
 		roleCache.clear();
 		roles.forEach(r -> roleCache.put(r.getId(), r));
@@ -98,7 +108,7 @@ public class UserClient {
 	@HystrixCommand(fallbackMethod = "getRoleCache", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public Role getRole(Long roleId) {
-		Role tmprole = restTemplate.getForObject("http://user-service/roles/" + roleId, Role.class);
+		Role tmprole = userRestTemplate.getForObject("http://user-service/roles/" + roleId, Role.class);
 		roleCache.putIfAbsent(roleId, tmprole);
 		return tmprole;
 	}
@@ -106,14 +116,14 @@ public class UserClient {
 	@HystrixCommand(fallbackMethod = "updateRoleFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public Role updateRole(Long roleId, Role payload) {
-		restTemplate.put("http://user-service/roles/" + roleId, payload);
+		userRestTemplate.put("http://user-service/roles/" + roleId, payload);
 		return new Role();
 	}
 
 	@HystrixCommand(fallbackMethod = "deleteRoleFallback", commandProperties = {
 	@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "2") })
 	public Role deleteRole(Long roleId) {
-		restTemplate.delete("http://user-service/roles/" + roleId);
+		userRestTemplate.delete("http://user-service/roles/" + roleId);
 		return new Role();
 	}
 
@@ -163,17 +173,5 @@ public class UserClient {
 	public Role deleteRoleFallback(Long getRoleId){
 		return new Role();
 	}
-
-	/*
-	* BEANS
-	*/
-
-	@LoadBalanced
-  @Bean
-  public RestTemplate restTemplate(RestTemplateBuilder builder) {
-     // Do any additional configuration here
-     return builder.build();
-  }
-
 
 }
