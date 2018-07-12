@@ -27,6 +27,7 @@ public class UserManagementController {
 	@HystrixCommand
 	@RequestMapping(value = "/users", method = RequestMethod.POST)
 	public ResponseEntity<User> createUser(@RequestBody User payload) {
+		System.out.println(payload.toString());
 		return new ResponseEntity<User>(userClient.createUser(payload), HttpStatus.OK);
 	}
 
