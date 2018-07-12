@@ -3,17 +3,17 @@ public class User {
 
 	private Long id;
 	private String username;
-	private String password;
+	private String peter;
 	private String firstname;
 	private String lastname;
 	private Integer roleId;
 
 	public User(){}
 
-	public User(Long id, String username, String password, String firstname, String lastname, Integer roleId) {
+	public User(Long id, String username, String peter, String firstname, String lastname, Integer roleId) {
 		this.id = id;
 		this.username = username;
-		this.password = password;
+		this.peter = peter;
 		this.firstname = firstname;
 		this.lastname = lastname;
 		this.roleId = roleId;
@@ -57,9 +57,17 @@ public class User {
 		this.roleId = roleId;
 	}
 
+	public String getPeter() {
+		return peter;
+	}
+
+	public void setPeter(String peter) {
+		this.peter = peter;
+	}
+
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", username=" + username + ", password=" + password + "]";
+		return "User [id=" + id + ", username=" + username + ", peter=" + peter + "]";
 	}
 
 }
